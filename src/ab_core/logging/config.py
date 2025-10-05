@@ -1,11 +1,13 @@
 """Main application for the User Service."""
+
 import logging
 import logging.config
-from rich.traceback import install as rich_traceback_install
 
 from pydantic import BaseModel, Field
+from rich.traceback import install as rich_traceback_install
 
 # ── Filters ────────────────────────────────────────────────────────────────────
+
 
 # Append the logger name (e.g. ab_service.user.routes) in front of the message.
 class PrependLoggerName(logging.Filter):
@@ -22,11 +24,31 @@ class PrependLoggerName(logging.Filter):
 # Append any non-standard LogRecord attributes (those provided via `extra=...`)
 # as key=value pairs after the message.
 _STANDARD_LOGRECORD_FIELDS = {
-    "name", "msg", "args", "levelname", "levelno", "pathname", "filename",
-    "module", "exc_info", "exc_text", "stack_info", "lineno", "funcName",
-    "created", "msecs", "relativeCreated", "thread", "threadName",
-    "processName", "process", "taskName", "color_message"
+    "name",
+    "msg",
+    "args",
+    "levelname",
+    "levelno",
+    "pathname",
+    "filename",
+    "module",
+    "exc_info",
+    "exc_text",
+    "stack_info",
+    "lineno",
+    "funcName",
+    "created",
+    "msecs",
+    "relativeCreated",
+    "thread",
+    "threadName",
+    "processName",
+    "process",
+    "taskName",
+    "color_message",
 }
+
+
 class ExtrasToMessage(logging.Filter):
     """Append the log records 'extras' to logs."""
 
@@ -53,7 +75,7 @@ class ExtrasToMessage(logging.Filter):
 class LoggingConfig(BaseModel):
     """Logging configuration factory."""
 
-    level: str = Field(
+    level: str | int = Field(
         default="INFO",
         title="Log Level",
         description="Log level for the service",
@@ -70,6 +92,7 @@ class LoggingConfig(BaseModel):
         default=["password", "secret", "token"],
         description="Keys in extras to redact if show_extras is enabled.",
     )
+    namespaces: list[str] = Field(default=[""], description="Namespaces that this logging configuration applies to.")
 
     def apply(self) -> None:
         """Apply configuration."""
@@ -89,40 +112,34 @@ class LoggingConfig(BaseModel):
             }
             handler_filters.append("extras_to_message")
 
-        CONFIG = {"level": self.level, "handlers": ["rich"], "propagate": False}
-        LOGGING_CONFIG = {
-            "version": 1,
-            "disable_existing_loggers": False,
-            "formatters": {
-                # RichHandler mainly uses the message; timestamp/level/path are handled by the handler.
-                "rich": {"format": "%(message)s", "datefmt": "[%X]"},
-            },
-            "filters": filters,
-            "handlers": {
-                "rich": {
-                    "class": "rich.logging.RichHandler",
-                    "level": self.level,
-                    "formatter": "rich",
-                    "rich_tracebacks": True,
-                    "tracebacks_show_locals": False,
-                    "markup": True,
-                    "show_time": True,
-                    "show_level": True,
-                    "show_path": True,
-                    "enable_link_path": True,
-                    "keywords": ["DEBUG", "INFO", "WARNING", "ERROR", "EXCEPTION", "CRITICAL"],
-                    **({"filters": handler_filters} if handler_filters else {}),
+        logging.config.dictConfig(
+            {
+                "version": 1,
+                "disable_existing_loggers": False,
+                "formatters": {
+                    # RichHandler mainly uses the message; timestamp/level/path are handled by the handler.
+                    "rich": {"format": "%(message)s", "datefmt": "[%X]"},
                 },
-            },
-            "loggers": {
-                # Root logger
-                "": CONFIG,
-                "ab_core":    CONFIG,
-                "ab_service": CONFIG,
-                "ab_client":  CONFIG,
-                "uvicorn":    CONFIG,
-                "alembic":    CONFIG,
-            },
-        }
-
-        logging.config.dictConfig(LOGGING_CONFIG)
+                "filters": filters,
+                "handlers": {
+                    "rich": {
+                        "class": "rich.logging.RichHandler",
+                        "level": self.level,
+                        "formatter": "rich",
+                        "rich_tracebacks": True,
+                        "tracebacks_show_locals": False,
+                        "markup": True,
+                        "show_time": True,
+                        "show_level": True,
+                        "show_path": True,
+                        "enable_link_path": True,
+                        "keywords": ["DEBUG", "INFO", "WARNING", "ERROR", "EXCEPTION", "CRITICAL"],
+                        **({"filters": handler_filters} if handler_filters else {}),
+                    },
+                },
+                "loggers": {
+                    namespace: {"level": self.level, "handlers": ["rich"], "propagate": False}
+                    for namespace in self.namespaces
+                },
+            }
+        )

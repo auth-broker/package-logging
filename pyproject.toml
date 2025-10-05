@@ -25,7 +25,7 @@ description = "Standardized logging for auth broker services."
 name = "ab-logging"
 readme = "README.md"
 requires-python = ">=3.12,<4.0"
-version = "0.1.1"
+version = "0.1.2"
 
 [tool.hatch.build.targets.sdist]
 include = ["src/ab_core"]
