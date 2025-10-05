@@ -17,7 +17,10 @@ dev = [
 
 [project]
 authors = [{email = "mattcoul7@gmail.com", name = "Matt Coulter"}]
-dependencies = []
+dependencies = [
+    "pydantic>=2.11.10",
+    "rich>=14.1.0",
+]
 description = "Standardized logging for auth broker services."
 name = "ab-logging"
 readme = "README.md"

@@ -33,7 +33,7 @@
       "type": "python",
       "request": "launch",
       "module": "pytest",
-      "args": ["-vv", "${relativeFile}", "--no-cov"],
+      "args": ["-vv", "${relativeFile}", "--no-cov", "-s"],
       "justMyCode": false,
       "console": "integratedTerminal",
       "cwd": "${workspaceFolder}",
